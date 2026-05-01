@@ -8,7 +8,6 @@ dependencies = [
     "bandit>=1.8.6",
     "boto3>=1.40.53",
     "diagrams>=0.24.4",
-    "graphviz2drawio>=1.1.0",
     "mcp[cli]>=1.23.0",
     "pydantic>=2.12.2",
     "python-hcl2>=4.3.0",
@@ -38,6 +37,13 @@ classifiers = [
 
 [project.urls]
 Source = "https://github.com/andrewmoshu/diagram-mcp-server"
+
+[project.optional-dependencies]
+# Optional: enables DOT -> .drawio export. On Windows this may require a C++ build toolchain
+# (pygraphviz) depending on your Python version.
+drawio = [
+    "graphviz2drawio>=1.1.0",
+]
 
 [dependency-groups]
 dev = [

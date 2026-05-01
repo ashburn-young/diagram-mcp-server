@@ -1,0 +1,136 @@
+---
+config:
+  layout: dagre
+---
+flowchart TB
+ subgraph SRC["Enterprise & External Sources"]
+        SRC_SAP["SAP ECC / S4 / BW"]
+        SRC_POS["POS & Store Systems"]
+        SRC_ECOM["ECommerce"]
+        SRC_SCM["Supply Chain / Logistics"]
+        SRC_CRM["CRM & Marketing"]
+        SRC_IOT["IoT / RFID / Events"]
+        SRC_AWS["AWS Data (S3 / Redshift)"]
+        SRC_EXT["3rdParty / Partners"]
+  end
+ subgraph ING["Ingestion & Integration"]
+        ING_ADF["Azure Data Factory (Batch / CDC)"]
+        ING_SAPC["SAP ODP / CDC"]
+        ING_EH["Event Hubs"]
+        ING_ASA["Stream Analytics"]
+        ING_API["API Management"]
+  end
+ subgraph STG["ADLS Gen2 (Storage Only)"]
+        STG_RAW["Landing Files"]
+        STG_LOG["_delta_log"]
+  end
+ subgraph DBX_BR["Bronze"]
+        DBX_BR_T["Raw Delta Tables"]
+  end
+ subgraph DBX_SI["Silver"]
+        DBX_SI_T["Validated / Conformed Tables"]
+  end
+ subgraph DBX_GO["Gold"]
+        DBX_GO_T["Certified Data Products (BI + AI Contract)"]
+  end
+ subgraph DBX["Azure Databricks Lakehouse"]
+        DBX_UC["Unity Catalog (Domains = Catalogs)"]
+        DBX_BR
+        DBX_SI
+        DBX_GO
+        DBX_DLT["Delta Live Tables (Quality, Lineage, Promotion)"]
+  end
+ subgraph AI["Knowledge, AI / ML & GenAI"]
+        AI_FEAT["Feature Engineering"]
+        AI_AML["Azure Machine Learning"]
+        AI_AOAI["Azure OpenAI (RAG, Agents)"]
+        AI_VEC["Vector Store"]
+  end
+ subgraph CON["Consumption & Data Marketplace"]
+        CON_PBI["Power BI / Embedded"]
+        CON_FAB["Microsoft Fabric (ReadOnly Analytics)"]
+        CON_APPS["Custom Apps / APIs"]
+        CON_COP["Copilots & Chatbots"]
+  end
+ subgraph GOV["Governance & Security"]
+        GOV_PUR["Microsoft Purview"]
+        GOV_ENTRA["Entra ID"]
+        GOV_POL["Azure Policy / RBAC / ABAC"]
+        GOV_DQ["Data Quality & Contracts"]
+  end
+ subgraph OPS["Platform Engineering"]
+        OPS_CI["CI/CD (Azure DevOps)"]
+        OPS_MON["Azure Monitor & Cost Mgmt"]
+        OPS_NET["Private Endpoints / VNETs"]
+  end
+    SRC_SAP --> ING_SAPC
+    ING_SAPC --> ING_ADF
+    ING_ADF --> STG_RAW & STG_RAW & STG_RAW & STG_RAW & STG_RAW
+    SRC_POS --> ING_EH
+    ING_EH --> ING_ASA & STG_RAW
+    ING_ASA --> STG_RAW
+    SRC_ECOM --> ING_ADF
+    SRC_SCM --> ING_ADF
+    SRC_CRM --> ING_API
+    ING_API --> STG_RAW
+    SRC_IOT --> ING_EH
+    SRC_AWS --> ING_ADF
+    SRC_EXT --> ING_ADF
+    STG_RAW --> DBX_BR_T
+    DBX_BR_T --> DBX_SI_T
+    DBX_SI_T --> DBX_GO_T
+    DBX_DLT --> DBX_BR_T & DBX_SI_T & DBX_GO_T
+    DBX_GO_T --> AI_FEAT & AI_AOAI & CON_PBI & CON_FAB
+    AI_FEAT --> AI_AML
+    AI_AOAI --> AI_VEC & CON_COP
+    AI_AML --> CON_APPS
+    GOV_ENTRA -.-> DBX_UC & AI_AML & CON_PBI
+    GOV_PUR -.-> DBX_UC & DBX_GO_T
+    GOV_DQ -.-> DBX_DLT
+    GOV_POL -.-> DBX
+    OPS_MON -.-> DBX & AI_AOAI
+    OPS_CI -.-> DBX
+    OPS_NET -.-> STG
+
+     SRC_SAP:::source
+     SRC_POS:::source
+     SRC_ECOM:::source
+     SRC_SCM:::source
+     SRC_CRM:::source
+     SRC_IOT:::source
+     SRC_AWS:::source
+     SRC_EXT:::source
+     ING_ADF:::ingest
+     ING_SAPC:::ingest
+     ING_EH:::ingest
+     ING_ASA:::ingest
+     ING_API:::ingest
+     STG_RAW:::source
+     STG_LOG:::source
+     DBX_BR_T:::lake
+     DBX_SI_T:::lake
+     DBX_GO_T:::lake
+     DBX_UC:::lake
+     DBX_DLT:::lake
+     AI_FEAT:::ai
+     AI_AML:::ai
+     AI_AOAI:::ai
+     AI_VEC:::ai
+     CON_PBI:::consume
+     CON_FAB:::consume
+     CON_APPS:::consume
+     CON_COP:::consume
+     GOV_PUR:::govern
+     GOV_ENTRA:::govern
+     GOV_POL:::govern
+     GOV_DQ:::govern
+     OPS_CI:::ops
+     OPS_MON:::ops
+     OPS_NET:::ops
+    classDef source fill:#D6EAF8,stroke:#5DADE2,stroke-width:1px
+    classDef ingest fill:#E8DAEF,stroke:#A569BD,stroke-width:1px
+    classDef lake fill:#D5F5E3,stroke:#52BE80,stroke-width:1px
+    classDef ai fill:#FAD7A0,stroke:#EB984E,stroke-width:1px
+    classDef consume fill:#FCF3CF,stroke:#F4D03F,stroke-width:1px
+    classDef govern fill:#F5B7B1,stroke:#CD6155,stroke-width:1px
+    classDef ops fill:#E5E7E9,stroke:#7B7D7D,stroke-width:1px

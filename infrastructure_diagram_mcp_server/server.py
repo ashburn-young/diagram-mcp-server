@@ -28,6 +28,7 @@ from infrastructure_diagram_mcp_server.diagrams_tools import (
     get_diagram_examples,
     list_diagram_icons,
 )
+from infrastructure_diagram_mcp_server.mermaid_tools import render_mermaid
 from infrastructure_diagram_mcp_server.models import DiagramType
 from infrastructure_diagram_mcp_server.parsers import (
     HelmParser,
@@ -99,6 +100,51 @@ IMPORTANT:
 - Use Clusters to organize and group related infrastructure components
 - Use Edge() for custom connection styling (color, style, labels)""",
 )
+
+
+@mcp.tool(name='render_mermaid')
+async def mcp_render_mermaid(
+    mermaid: str = Field(
+        ...,
+        description='Mermaid diagram text (e.g. `graph TD; A-->B`). Renders to a PNG image. Requires local Mermaid CLI `mmdc` to be installed.',
+    ),
+    filename: Optional[str] = Field(
+        default=None,
+        description='The filename to save the diagram to (without extension). If not provided, a random name will be generated.',
+    ),
+    timeout: int = Field(
+        default=90,
+        description='The timeout for Mermaid rendering in seconds. Default is 90 seconds.',
+    ),
+    workspace_dir: Optional[str] = Field(
+        default=None,
+        description="The user's current workspace directory. If provided, output is saved to a 'generated-diagrams' subdirectory.",
+    ),
+):
+    """Render a Mermaid diagram to PNG.
+
+    Notes:
+    - This server does NOT convert Mermaid into the Python `diagrams` DSL.
+    - It renders Mermaid using a local Mermaid CLI (`mmdc`). If `mmdc` is not installed, the tool returns
+      a clear error message with install instructions.
+    """
+
+    result = await render_mermaid(
+        mermaid=mermaid,
+        filename=filename,
+        timeout=timeout,
+        workspace_dir=workspace_dir,
+    )
+
+    if result.status == 'success' and result.image_data:
+        message = f"{result.message}\n\nGenerated files:\n  • PNG diagram: {result.path}"
+
+        return [
+            TextContent(type='text', text=message),
+            ImageContent(type='image', data=result.image_data, mimeType=result.mime_type or 'image/png'),
+        ]
+
+    return [TextContent(type='text', text=f"Error: {result.message}")]
 
 
 # Register tools

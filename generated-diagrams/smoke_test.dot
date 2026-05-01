@@ -1,0 +1,44 @@
+digraph "Smoke Test" {
+	graph [bb="0,0,255.6,164.3",
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=15,
+		label="Smoke Test",
+		lheight=0.27,
+		lp="127.8,13.75",
+		lwidth=1.06,
+		nodesep=0.60,
+		pad=2.0,
+		rankdir=LR,
+		ranksep=0.75,
+		splines=ortho
+	];
+	node [fixedsize=true,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		height=1.4,
+		imagescale=true,
+		label="\N",
+		labelloc=b,
+		shape=box,
+		style=rounded,
+		width=1.4
+	];
+	edge [color="#7B8894"];
+	af99dba9a2fe4ea4b91f42932017b0b7	[height=1.9,
+		image="C:\Users\kimyo\vscodeprojects\diagram-mcp-server\.venv\Lib\site-packages\resources/aws/network\elastic-load-balancing.png",
+		label=lb,
+		pos="50.4,95.9",
+		shape=none];
+	a4112a2b2aed4eb6879d3858c13f0710	[height=1.9,
+		image="C:\Users\kimyo\vscodeprojects\diagram-mcp-server\.venv\Lib\site-packages\resources/aws/compute\ec2.png",
+		label=web,
+		pos="205.2,95.9",
+		shape=none];
+	af99dba9a2fe4ea4b91f42932017b0b7 -> a4112a2b2aed4eb6879d3858c13f0710	[dir=forward,
+		fontcolor="#2D3436",
+		fontname="Sans-Serif",
+		fontsize=13,
+		pos="e,154.93,95.9 100.66,95.9 100.66,95.9 143.41,95.9 143.41,95.9"];
+}

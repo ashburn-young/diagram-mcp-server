@@ -228,12 +228,14 @@ from diagrams.gcp.security import *
 from diagrams.gcp.migration import *
 from diagrams.azure.web import *
 from diagrams.azure.database import *
+from diagrams.azure.databases import *
 from diagrams.azure.storage import *
 from diagrams.azure.compute import *
 from diagrams.azure.analytics import *
 from diagrams.azure.integration import *
 from diagrams.azure.devops import *
 from diagrams.azure.ml import *
+from diagrams.azure.monitor import *
 from diagrams.azure.iot import *
 from diagrams.azure.network import *
 from diagrams.azure.general import *
@@ -296,58 +298,56 @@ from diagrams.aws.enduser import *
             'from urllib.request import urlretrieve', namespace
         )  # nosem: python.lang.security.audit.exec-detected.exec-detected
 
-        # Process the code to ensure show=False and set the output path
+        # Process the code to ensure show=False and set the output path.
+        # Note: Diagram(...) calls are often multi-line; handle both single-line and multi-line cases.
         if 'with Diagram(' in code:
-            # Find all instances of Diagram constructor
-            diagram_pattern = r'with\s+Diagram\s*\((.*?)\)'
-            matches = re.findall(diagram_pattern, code)
+            diagram_pattern = r'with\s+Diagram\s*\((?P<args>.*?)\)\s*:'
 
-            for match in matches:
-                # Get the original arguments
-                original_args = match.strip()
+            def _diagram_repl(m: re.Match[str]) -> str:
+                original_args = m.group('args').strip()
 
-                # Check if show parameter is already set
                 has_show = 'show=' in original_args
                 has_filename = 'filename=' in original_args
                 has_outformat = 'outformat=' in original_args
 
-                # Prepare new arguments
                 new_args = original_args
 
-                # Add or replace parameters as needed
-                # If filename is already set, we need to replace it with our output_path
                 if has_filename:
-                    # Replace the existing filename parameter
                     filename_pattern = r'filename\s*=\s*[\'"]([^\'"]*)[\'"]'
-                    new_args = re.sub(filename_pattern, f"filename='{output_path}'", new_args)
+                    new_args = re.sub(
+                        filename_pattern,
+                        lambda _m: f"filename={output_path!r}",
+                        new_args,
+                    )
                 else:
-                    # Add the filename parameter
                     if new_args and not new_args.endswith(','):
                         new_args += ', '
-                    new_args += f"filename='{output_path}'"
+                    new_args += f"filename={output_path!r}"
 
-                # Add show=False if not already set
                 if not has_show:
                     if new_args and not new_args.endswith(','):
                         new_args += ', '
                     new_args += 'show=False'
 
-                # Add outformat=["png", "dot"] to generate both PNG and DOT files
                 if not has_outformat:
                     if new_args and not new_args.endswith(','):
                         new_args += ', '
                     new_args += 'outformat=["png", "dot"]'
 
-                # Replace in the code
-                code = code.replace(f'with Diagram({original_args})', f'with Diagram({new_args})')
+                return f'with Diagram({new_args}):'
+
+            code = re.sub(diagram_pattern, _diagram_repl, code, flags=re.DOTALL)
 
         # Set up a timeout handler
-        def timeout_handler(signum, frame):
-            raise TimeoutError(f'Diagram generation timed out after {timeout} seconds')
+        # Note: `signal.SIGALRM`/`signal.alarm` are not available on Windows.
+        use_alarm_timeout = hasattr(signal, 'SIGALRM') and hasattr(signal, 'alarm')
+        if use_alarm_timeout:
+            def timeout_handler(signum, frame):
+                raise TimeoutError(f'Diagram generation timed out after {timeout} seconds')
 
-        # Register the timeout handler
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(timeout)
+            # Register the timeout handler
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(timeout)
 
         # Change to output directory before executing code
         # This ensures the diagrams library can create temporary directories
@@ -363,7 +363,8 @@ from diagrams.aws.enduser import *
             os.chdir(original_cwd)
 
         # Cancel the alarm
-        signal.alarm(0)
+        if use_alarm_timeout:
+            signal.alarm(0)
 
         # Check if the file was created
         png_path = f'{output_path}.png'
